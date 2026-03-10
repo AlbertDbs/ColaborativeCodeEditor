@@ -1,0 +1,15 @@
+# Java / Maven
+build/
+target/
+*.iml
+out/
+
+# IDE
+.idea/
+
+# Node / React
+node_modules/
+dist/
+
+# OS
+.DS_Store
