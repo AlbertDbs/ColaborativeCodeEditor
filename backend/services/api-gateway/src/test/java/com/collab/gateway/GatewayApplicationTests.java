@@ -8,6 +8,6 @@ class GatewayApplicationTests {
 
     @Test
     void contextLoads() {
-        // Verifies that the Spring context starts with our minimal configuration.
+        // Ensures reactive gateway context starts.
     }
 }
