@@ -4,8 +4,10 @@ import com.collab.auth.service.AuthService;
 import com.collab.auth.service.InvalidCredentialsException;
 import com.collab.auth.service.UserAlreadyExistsException;
 import com.collab.auth.service.UserService;
+import com.collab.auth.service.GoogleLoginService;
 import com.collab.auth.web.dto.LoginRequest;
 import com.collab.auth.web.dto.LoginResponse;
+import com.collab.auth.web.dto.GoogleLoginRequest;
 import com.collab.auth.web.dto.RegisterRequest;
 import com.collab.auth.web.dto.RegisterResponse;
 import jakarta.validation.Valid;
@@ -25,10 +27,12 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final GoogleLoginService googleLoginService;
 
-    public AuthController(UserService userService, AuthService authService) {
+    public AuthController(UserService userService, AuthService authService, GoogleLoginService googleLoginService) {
         this.userService = userService;
         this.authService = authService;
+        this.googleLoginService = googleLoginService;
     }
 
     @PostMapping("/register")
@@ -42,6 +46,12 @@ public class AuthController {
         var result = authService.login(request.email(), request.password());
         // expire is taken from properties; for simplicity we reuse jwtService via LoginResult
         return ResponseEntity.ok(LoginResponse.bearer(result.accessToken(), 3600));
+    }
+
+    @PostMapping("/login/google")
+    public ResponseEntity<LoginResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
+        String token = googleLoginService.loginWithIdToken(request.idToken());
+        return ResponseEntity.ok(LoginResponse.bearer(token, 3600));
     }
 
     @GetMapping("/me")

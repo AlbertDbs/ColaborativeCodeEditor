@@ -27,3 +27,6 @@ jwt:
   secret: ${AUTH_JWT_SECRET:9fK2mL8xQ1pZ7vNc4rTy6uHs3aWd0eBj}
   issuer: collab-platform
   access-token-validity-seconds: 3600
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:dummy-client-id}
