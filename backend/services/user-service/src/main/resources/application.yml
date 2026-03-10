@@ -1,0 +1,26 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${USER_DB_URL:jdbc:postgresql://localhost:5433/collab_user}
+    username: ${USER_DB_USERNAME:collab}
+    password: ${USER_DB_PASSWORD:collab}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${AUTH_JWT_SECRET:9fK2mL8xQ1pZ7vNc4rTy6uHs3aWd0eBj}
+  issuer: collab-platform
