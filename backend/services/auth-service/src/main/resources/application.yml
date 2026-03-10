@@ -23,6 +23,7 @@ spring:
     baseline-on-migrate: true
 
 jwt:
-  secret: ${AUTH_JWT_SECRET:dev-secret-change-me}
+  # Must be >= 32 chars (256 bits) for HMAC-SHA256
+  secret: ${AUTH_JWT_SECRET:9fK2mL8xQ1pZ7vNc4rTy6uHs3aWd0eBj}
   issuer: collab-platform
   access-token-validity-seconds: 3600
