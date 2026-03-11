@@ -1,0 +1,26 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: workspace-service
+  datasource:
+    url: ${WORKSPACE_DB_URL:jdbc:postgresql://localhost:5433/collab_workspace}
+    username: ${WORKSPACE_DB_USERNAME:collab}
+    password: ${WORKSPACE_DB_PASSWORD:collab}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${AUTH_JWT_SECRET:9fK2mL8xQ1pZ7vNc4rTy6uHs3aWd0eBj}
+  issuer: collab-platform
