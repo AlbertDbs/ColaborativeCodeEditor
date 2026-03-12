@@ -14,10 +14,16 @@
 
     <modules>
         <module>services/api-gateway</module>
+        <module>services/auth-service</module>
+        <module>services/user-service</module>
+        <module>services/workspace-service</module>
+        <module>services/invitation-service</module>
+        <module>services/document-service</module>
     </modules>
 
     <properties>
         <java.version>17</java.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -26,6 +32,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>3.2.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

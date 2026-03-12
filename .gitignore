@@ -4,9 +4,6 @@ target/
 *.iml
 out/
 
-# IDE
-.idea/
-
 # Node / React
 node_modules/
 dist/

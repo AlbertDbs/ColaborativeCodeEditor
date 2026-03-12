@@ -22,6 +22,9 @@ spring:
     table: flyway_schema_history
     baseline-on-migrate: true
 
+user-service:
+  base-url: ${USER_SERVICE_BASE_URL:http://localhost:8082}
+
 jwt:
   # Must be >= 32 chars (256 bits) for HMAC-SHA256
   secret: ${AUTH_JWT_SECRET:9fK2mL8xQ1pZ7vNc4rTy6uHs3aWd0eBj}

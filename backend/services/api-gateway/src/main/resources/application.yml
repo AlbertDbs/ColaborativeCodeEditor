@@ -23,38 +23,26 @@ spring:
           uri: ${collab.routes.auth:http://localhost:8081}
           predicates:
             - Path=/auth/**
-          filters:
-            - StripPrefix=1
         - id: user-service
           uri: ${collab.routes.user:http://localhost:8082}
           predicates:
             - Path=/users/**
-          filters:
-            - StripPrefix=1
         - id: workspace-service
           uri: ${collab.routes.workspace:http://localhost:8083}
           predicates:
             - Path=/workspaces/**
-          filters:
-            - StripPrefix=1
         - id: invitation-service
           uri: ${collab.routes.invitation:http://localhost:8084}
           predicates:
             - Path=/invitations/**
-          filters:
-            - StripPrefix=1
         - id: document-service
           uri: ${collab.routes.document:http://localhost:8085}
           predicates:
             - Path=/documents/**
-          filters:
-            - StripPrefix=1
         - id: collaboration-ws
           uri: ${collab.routes.collab:ws://localhost:8090}
           predicates:
             - Path=/collab/**
-          filters:
-            - StripPrefix=1
 
 server:
   port: 8080

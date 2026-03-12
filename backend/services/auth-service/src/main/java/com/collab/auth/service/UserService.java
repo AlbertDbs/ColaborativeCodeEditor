@@ -16,10 +16,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserProfileClient userProfileClient;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       UserProfileClient userProfileClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userProfileClient = userProfileClient;
     }
 
     @Transactional
@@ -31,6 +35,12 @@ public class UserService {
         String hash = passwordEncoder.encode(request.password());
         User user = new User(UUID.randomUUID(), normalizedEmail, hash, OffsetDateTime.now());
         userRepository.save(user);
+        // best-effort create profile in User Service; we don't fail register if profile call fails
+        try {
+            userProfileClient.createProfile(user.getId(), user.getEmail());
+        } catch (Exception ignored) {
+            // log could be added later
+        }
         return new RegisterResponse(user.getId(), user.getEmail(), user.getCreatedAt());
     }
 }
