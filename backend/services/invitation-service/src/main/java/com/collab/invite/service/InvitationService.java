@@ -41,10 +41,18 @@ public class InvitationService {
         return repository.findByInviterId(inviterId);
     }
 
+    @Transactional(readOnly = true)
+    public List<Invitation> listReceivedBy(String inviteeEmail) {
+        return repository.findByInviteeEmailIgnoreCase(inviteeEmail.toLowerCase());
+    }
+
     @Transactional
-    public Invitation accept(UUID invitationId, UUID userId) {
+    public Invitation accept(UUID invitationId, UUID userId, String userEmail) {
         Invitation invitation = repository.findById(invitationId)
                 .orElseThrow(() -> new InvitationNotFoundException(invitationId));
+        if (!invitation.getInviteeEmail().equalsIgnoreCase(userEmail)) {
+            throw new org.springframework.security.access.AccessDeniedException("Doar invitatul poate accepta");
+        }
         if (!invitation.isPending()) {
             return invitation;
         }
@@ -53,9 +61,12 @@ public class InvitationService {
     }
 
     @Transactional
-    public Invitation refuse(UUID invitationId, UUID userId) {
+    public Invitation refuse(UUID invitationId, UUID userId, String userEmail) {
         Invitation invitation = repository.findById(invitationId)
                 .orElseThrow(() -> new InvitationNotFoundException(invitationId));
+        if (!invitation.getInviteeEmail().equalsIgnoreCase(userEmail)) {
+            throw new org.springframework.security.access.AccessDeniedException("Doar invitatul poate refuza");
+        }
         if (!invitation.isPending()) {
             return invitation;
         }

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -44,7 +45,7 @@ class InvitationServiceTest {
     @Test
     void acceptSetsStatusAndAcceptedBy() {
         var inv = service.create(inviterId, inviterId, new CreateInvitationRequest(workspaceId, "bob@example.com"));
-        var accepted = service.accept(inv.getId(), UUID.randomUUID());
+        var accepted = service.accept(inv.getId(), UUID.randomUUID(), "bob@example.com");
         assertThat(accepted.getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
         assertThat(accepted.getAcceptedBy()).isNotNull();
     }
@@ -52,7 +53,14 @@ class InvitationServiceTest {
     @Test
     void refuseSetsStatusAndAcceptedBy() {
         var inv = service.create(inviterId, inviterId, new CreateInvitationRequest(workspaceId, "bob@example.com"));
-        var refused = service.refuse(inv.getId(), UUID.randomUUID());
+        var refused = service.refuse(inv.getId(), UUID.randomUUID(), "bob@example.com");
         assertThat(refused.getStatus()).isEqualTo(InvitationStatus.REFUSED);
+    }
+
+    @Test
+    void acceptFailsWhenCallerIsNotInvitee() {
+        var inv = service.create(inviterId, inviterId, new CreateInvitationRequest(workspaceId, "bob@example.com"));
+        assertThatThrownBy(() -> service.accept(inv.getId(), UUID.randomUUID(), "alice@example.com"))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
 }
