@@ -1,6 +1,7 @@
 package com.collab.document.web;
 
 import com.collab.document.service.DocumentService;
+import com.collab.document.service.AuthPrincipal;
 import com.collab.document.web.dto.CreateDocumentRequest;
 import com.collab.document.web.dto.DocumentResponse;
 import com.collab.document.web.dto.UpdateDocumentRequest;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -33,8 +35,8 @@ public class DocumentController {
     @PostMapping
     public ResponseEntity<DocumentResponse> create(Authentication auth,
                                                    @Valid @RequestBody CreateDocumentRequest request) {
-        UUID ownerId = userId(auth);
-        var doc = service.create(ownerId, request);
+        AuthPrincipal principal = principal(auth);
+        var doc = service.create(principal, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(DocumentResponse.from(doc));
     }
 
@@ -54,15 +56,26 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> update(@PathVariable UUID id,
                                                    Authentication auth,
                                                    @Valid @RequestBody UpdateDocumentRequest request) {
-        UUID ownerId = userId(auth);
-        var doc = service.update(id, ownerId, request);
+        AuthPrincipal principal = principal(auth);
+        var doc = service.update(id, principal, request);
         return ResponseEntity.ok(DocumentResponse.from(doc));
     }
 
-    private UUID userId(Authentication auth) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id, Authentication auth) {
+        AuthPrincipal principal = principal(auth);
+        service.delete(id, principal);
+        return ResponseEntity.noContent().build();
+    }
+
+    private AuthPrincipal principal(Authentication auth) {
         if (auth == null || auth.getPrincipal() == null) {
             throw new org.springframework.security.access.AccessDeniedException("Missing token");
         }
-        return UUID.fromString(auth.getPrincipal().toString());
+        Object p = auth.getPrincipal();
+        if (p instanceof AuthPrincipal ap) {
+            return ap;
+        }
+        throw new org.springframework.security.access.AccessDeniedException("Invalid token");
     }
 }

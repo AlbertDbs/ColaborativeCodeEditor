@@ -15,20 +15,25 @@ import java.util.UUID;
 public class DocumentService {
 
     private final DocumentRepository repository;
+    private final MembershipService membershipService;
 
-    public DocumentService(DocumentRepository repository) {
+    public DocumentService(DocumentRepository repository, MembershipService membershipService) {
         this.repository = repository;
+        this.membershipService = membershipService;
     }
 
     @Transactional
-    public Document create(UUID ownerId, CreateDocumentRequest request) {
+    public Document create(AuthPrincipal principal, CreateDocumentRequest request) {
+        if (!membershipService.canWrite(request.workspaceId(), principal)) {
+            throw new org.springframework.security.access.AccessDeniedException("Not allowed in workspace");
+        }
         OffsetDateTime now = OffsetDateTime.now();
         Document doc = new Document(
                 UUID.randomUUID(),
                 request.workspaceId(),
-                ownerId,
+                principal.userId(),
                 request.title(),
-                request.content(),
+                request.content() == null ? "" : request.content(),
                 1,
                 now,
                 now
@@ -47,12 +52,22 @@ public class DocumentService {
     }
 
     @Transactional
-    public Document update(UUID id, UUID ownerId, UpdateDocumentRequest request) {
+    public Document update(UUID id, AuthPrincipal principal, UpdateDocumentRequest request) {
         Document doc = get(id);
-        if (!doc.getOwnerId().equals(ownerId)) {
-            throw new org.springframework.security.access.AccessDeniedException("Only owner can update");
+        if (doc.getOwnerId().equals(principal.userId()) || membershipService.canWrite(doc.getWorkspaceId(), principal)) {
+            doc.update(request.title(), request.content());
+            return repository.save(doc);
         }
-        doc.update(request.title(), request.content());
-        return repository.save(doc);
+        throw new org.springframework.security.access.AccessDeniedException("Not allowed to update");
+    }
+
+    @Transactional
+    public void delete(UUID id, AuthPrincipal principal) {
+        Document doc = get(id);
+        if (doc.getOwnerId().equals(principal.userId()) || membershipService.canWrite(doc.getWorkspaceId(), principal)) {
+            repository.delete(doc);
+            return;
+        }
+        throw new org.springframework.security.access.AccessDeniedException("Not allowed to delete");
     }
 }

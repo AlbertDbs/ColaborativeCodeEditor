@@ -64,4 +64,20 @@ class DocumentServiceTest {
                 new UpdateDocumentRequest("Doc2", "new content")))
                 .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }
+
+    @Test
+    void deleteAllowedForOwner() {
+        var doc = service.create(owner, new CreateDocumentRequest(workspaceId, "Doc", "content"));
+        service.delete(doc.getId(), owner);
+        assertThat(repository.count()).isZero();
+    }
+
+    @Test
+    void deleteDeniedForNonMember() {
+        var doc = service.create(owner, new CreateDocumentRequest(workspaceId, "Doc", "content"));
+        var other = new AuthPrincipal(UUID.randomUUID(), "other@example.com");
+        when(membershipService.canWrite(workspaceId, other)).thenReturn(false);
+        assertThatThrownBy(() -> service.delete(doc.getId(), other))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    }
 }
