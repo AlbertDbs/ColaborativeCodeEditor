@@ -46,6 +46,11 @@ public class InvitationService {
         return repository.findByInviteeEmailIgnoreCase(inviteeEmail.toLowerCase());
     }
 
+    @Transactional(readOnly = true)
+    public boolean isAccepted(UUID workspaceId, String inviteeEmail, InvitationStatus status) {
+        return repository.existsByWorkspaceIdAndInviteeEmailIgnoreCaseAndStatus(workspaceId, inviteeEmail.toLowerCase(), status);
+    }
+
     @Transactional
     public Invitation accept(UUID invitationId, UUID userId, String userEmail) {
         Invitation invitation = repository.findById(invitationId)

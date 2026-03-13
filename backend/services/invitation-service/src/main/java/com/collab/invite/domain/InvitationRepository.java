@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface InvitationRepository extends JpaRepository<Invitation, UUID> {
     List<Invitation> findByInviterId(UUID inviterId);
     List<Invitation> findByInviteeEmailIgnoreCase(String inviteeEmail);
+    boolean existsByWorkspaceIdAndInviteeEmailIgnoreCaseAndStatus(UUID workspaceId, String inviteeEmail, InvitationStatus status);
 }
