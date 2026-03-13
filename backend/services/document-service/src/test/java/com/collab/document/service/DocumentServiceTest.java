@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -24,35 +26,41 @@ class DocumentServiceTest {
     @Autowired
     private DocumentRepository repository;
 
-    private UUID ownerId;
+    @MockBean
+    private MembershipService membershipService;
+
+    private AuthPrincipal owner;
     private UUID workspaceId;
 
     @BeforeEach
     void clean() {
         repository.deleteAll();
-        ownerId = UUID.randomUUID();
+        owner = new AuthPrincipal(UUID.randomUUID(), "owner@example.com");
         workspaceId = UUID.randomUUID();
+        when(membershipService.canWrite(workspaceId, owner)).thenReturn(true);
     }
 
     @Test
     @Transactional
     void createPersistsDocumentWithVersion1() {
-        var doc = service.create(ownerId, new CreateDocumentRequest(workspaceId, "Doc", "content"));
+        var doc = service.create(owner, new CreateDocumentRequest(workspaceId, "Doc", "content"));
         assertThat(doc.getVersion()).isEqualTo(1);
         assertThat(repository.count()).isEqualTo(1);
     }
 
     @Test
     void updateIncrementsVersion() {
-        var doc = service.create(ownerId, new CreateDocumentRequest(workspaceId, "Doc", "content"));
-        var updated = service.update(doc.getId(), ownerId, new UpdateDocumentRequest("Doc2", "new content"));
+        var doc = service.create(owner, new CreateDocumentRequest(workspaceId, "Doc", "content"));
+        var updated = service.update(doc.getId(), owner, new UpdateDocumentRequest("Doc2", "new content"));
         assertThat(updated.getVersion()).isEqualTo(2);
     }
 
     @Test
     void updateByNonOwnerDenied() {
-        var doc = service.create(ownerId, new CreateDocumentRequest(workspaceId, "Doc", "content"));
-        assertThatThrownBy(() -> service.update(doc.getId(), UUID.randomUUID(),
+        var doc = service.create(owner, new CreateDocumentRequest(workspaceId, "Doc", "content"));
+        var other = new AuthPrincipal(UUID.randomUUID(), "other@example.com");
+        when(membershipService.canWrite(workspaceId, other)).thenReturn(false);
+        assertThatThrownBy(() -> service.update(doc.getId(), other,
                 new UpdateDocumentRequest("Doc2", "new content")))
                 .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
     }

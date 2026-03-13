@@ -9,6 +9,6 @@ import java.util.UUID;
 public record CreateDocumentRequest(
         @NotNull UUID workspaceId,
         @NotBlank @Size(max = 255) String title,
-        @NotBlank String content
+        String content
 ) {
 }

@@ -24,3 +24,12 @@ spring:
 jwt:
   secret: ${AUTH_JWT_SECRET:9fK2mL8xQ1pZ7vNc4rTy6uHs3aWd0eBj}
   issuer: collab-platform
+
+services:
+  workspace:
+    url: ${WORKSPACE_SERVICE_URL:http://localhost:8083}
+  invitation:
+    url: ${INVITATION_SERVICE_URL:http://localhost:8084}
+
+internal:
+  api-key: ${INTERNAL_API_KEY:internal-secret}
