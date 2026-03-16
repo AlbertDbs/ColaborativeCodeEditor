@@ -31,6 +31,12 @@ public class Document {
     @Column(nullable = false)
     private int version;
 
+    @Column(name = "updated_by_id")
+    private UUID updatedById;
+
+    @Column(name = "updated_by_email")
+    private String updatedByEmail;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -41,6 +47,7 @@ public class Document {
     }
 
     public Document(UUID id, UUID workspaceId, UUID ownerId, String title, String content, int version,
+                    UUID updatedById, String updatedByEmail,
                     OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         this.id = id;
         this.workspaceId = workspaceId;
@@ -48,6 +55,8 @@ public class Document {
         this.title = title;
         this.content = content;
         this.version = version;
+        this.updatedById = updatedById;
+        this.updatedByEmail = updatedByEmail;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -63,12 +72,16 @@ public class Document {
     public String getTitle() { return title; }
     public String getContent() { return content; }
     public int getVersion() { return version; }
+    public UUID getUpdatedById() { return updatedById; }
+    public String getUpdatedByEmail() { return updatedByEmail; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 
-    public void update(String title, String content) {
+    public void update(String title, String content, UUID updatedById, String updatedByEmail) {
         this.title = title;
         this.content = content;
         this.version += 1;
+        this.updatedById = updatedById;
+        this.updatedByEmail = updatedByEmail;
     }
 }

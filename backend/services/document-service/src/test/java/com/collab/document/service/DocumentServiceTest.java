@@ -53,6 +53,7 @@ class DocumentServiceTest {
         var doc = service.create(owner, new CreateDocumentRequest(workspaceId, "Doc", "content"));
         var updated = service.update(doc.getId(), owner, new UpdateDocumentRequest("Doc2", "new content"));
         assertThat(updated.getVersion()).isEqualTo(2);
+        assertThat(updated.getUpdatedById()).isEqualTo(owner.userId());
     }
 
     @Test

@@ -12,6 +12,8 @@ public record DocumentResponse(
         String title,
         String content,
         int version,
+        UUID updatedById,
+        String updatedByEmail,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -23,6 +25,8 @@ public record DocumentResponse(
                 doc.getTitle(),
                 doc.getContent(),
                 doc.getVersion(),
+                doc.getUpdatedById(),
+                doc.getUpdatedByEmail(),
                 doc.getCreatedAt(),
                 doc.getUpdatedAt()
         );

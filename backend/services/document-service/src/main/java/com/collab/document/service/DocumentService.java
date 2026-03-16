@@ -35,6 +35,8 @@ public class DocumentService {
                 request.title(),
                 request.content() == null ? "" : request.content(),
                 1,
+                principal.userId(),
+                principal.email(),
                 now,
                 now
         );
@@ -55,7 +57,7 @@ public class DocumentService {
     public Document update(UUID id, AuthPrincipal principal, UpdateDocumentRequest request) {
         Document doc = get(id);
         if (doc.getOwnerId().equals(principal.userId()) || membershipService.canWrite(doc.getWorkspaceId(), principal)) {
-            doc.update(request.title(), request.content());
+            doc.update(request.title(), request.content(), principal.userId(), principal.email());
             return repository.save(doc);
         }
         throw new org.springframework.security.access.AccessDeniedException("Not allowed to update");
