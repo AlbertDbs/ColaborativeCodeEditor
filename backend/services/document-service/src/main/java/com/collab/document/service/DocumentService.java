@@ -3,6 +3,7 @@ package com.collab.document.service;
 import com.collab.document.domain.Document;
 import com.collab.document.domain.DocumentRepository;
 import com.collab.document.web.dto.CreateDocumentRequest;
+import com.collab.document.web.dto.DocumentResponse;
 import com.collab.document.web.dto.UpdateDocumentRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,14 @@ public class DocumentService {
 
     private final DocumentRepository repository;
     private final MembershipService membershipService;
+    private final DocumentEventBroadcaster broadcaster;
 
-    public DocumentService(DocumentRepository repository, MembershipService membershipService) {
+    public DocumentService(DocumentRepository repository,
+                           MembershipService membershipService,
+                           DocumentEventBroadcaster broadcaster) {
         this.repository = repository;
         this.membershipService = membershipService;
+        this.broadcaster = broadcaster;
     }
 
     @Transactional
@@ -40,7 +45,9 @@ public class DocumentService {
                 now,
                 now
         );
-        return repository.save(doc);
+        Document saved = repository.save(doc);
+        broadcaster.documentChanged(DocumentResponse.from(saved));
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -58,7 +65,9 @@ public class DocumentService {
         Document doc = get(id);
         if (doc.getOwnerId().equals(principal.userId()) || membershipService.canWrite(doc.getWorkspaceId(), principal)) {
             doc.update(request.title(), request.content(), principal.userId(), principal.email());
-            return repository.save(doc);
+            Document saved = repository.save(doc);
+            broadcaster.documentChanged(DocumentResponse.from(saved));
+            return saved;
         }
         throw new org.springframework.security.access.AccessDeniedException("Not allowed to update");
     }
@@ -68,8 +77,13 @@ public class DocumentService {
         Document doc = get(id);
         if (doc.getOwnerId().equals(principal.userId()) || membershipService.canWrite(doc.getWorkspaceId(), principal)) {
             repository.delete(doc);
+            broadcaster.documentDeleted(id);
             return;
         }
         throw new org.springframework.security.access.AccessDeniedException("Not allowed to delete");
+    }
+
+    public boolean canAccess(Document doc, AuthPrincipal principal) {
+        return doc.getOwnerId().equals(principal.userId()) || membershipService.canWrite(doc.getWorkspaceId(), principal);
     }
 }

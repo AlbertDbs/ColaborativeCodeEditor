@@ -1,5 +1,6 @@
 package com.collab.document.web;
 
+import com.collab.document.service.DocumentEventBroadcaster;
 import com.collab.document.service.DocumentService;
 import com.collab.document.service.AuthPrincipal;
 import com.collab.document.web.dto.CreateDocumentRequest;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,9 +29,11 @@ import java.util.UUID;
 public class DocumentController {
 
     private final DocumentService service;
+    private final DocumentEventBroadcaster broadcaster;
 
-    public DocumentController(DocumentService service) {
+    public DocumentController(DocumentService service, DocumentEventBroadcaster broadcaster) {
         this.service = service;
+        this.broadcaster = broadcaster;
     }
 
     @PostMapping
@@ -44,6 +48,16 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> get(@PathVariable UUID id) {
         var doc = service.get(id);
         return ResponseEntity.ok(DocumentResponse.from(doc));
+    }
+
+    @GetMapping("/{id}/stream")
+    public SseEmitter stream(@PathVariable UUID id, Authentication auth) {
+        AuthPrincipal principal = principal(auth);
+        var doc = service.get(id);
+        if (!service.canAccess(doc, principal)) {
+            throw new org.springframework.security.access.AccessDeniedException("Not allowed in workspace");
+        }
+        return broadcaster.register(id);
     }
 
     @GetMapping

@@ -28,13 +28,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String token = null;
         String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header == null || !header.startsWith("Bearer ")) {
+        if (header != null && header.startsWith("Bearer ")) {
+            token = header.substring(7);
+        }
+        if (token == null) {
+            String queryToken = request.getParameter("token");
+            if (queryToken != null) {
+                token = queryToken.startsWith("Bearer ") ? queryToken.substring(7) : queryToken;
+            }
+        }
+        if (token == null) {
             filterChain.doFilter(request, response);
             return;
         }
         try {
-            Claims claims = validator.parse(header.substring(7));
+            Claims claims = validator.parse(token);
             UUID userId = UUID.fromString((String) claims.get("uid"));
             String email = claims.getSubject();
             AuthPrincipal principal = new AuthPrincipal(userId, email);
