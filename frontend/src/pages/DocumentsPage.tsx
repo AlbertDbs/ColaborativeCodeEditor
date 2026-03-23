@@ -26,20 +26,42 @@ import { useAuth } from '../state/AuthProvider';
 import type { editor } from 'monaco-editor';
 
 const LANGUAGE_OPTIONS = [
-  { value: 'plaintext', label: 'Text' },
-  { value: 'javascript', label: 'JavaScript' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python', label: 'Python' },
-  { value: 'java', label: 'Java' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'c', label: 'C' },
-  { value: 'php', label: 'PHP' },
-  { value: 'go', label: 'Go' },
-  { value: 'rust', label: 'Rust' },
-  { value: 'html', label: 'HTML' },
-  { value: 'css', label: 'CSS' },
-  { value: 'json', label: 'JSON' }
+  { value: 'c', label: 'C', extension: '.c', editorLanguage: 'c' },
+  { value: 'cpp', label: 'C++', extension: '.cpp', editorLanguage: 'cpp' },
+  { value: 'java', label: 'Java', extension: '.java', editorLanguage: 'java' },
+  { value: 'python', label: 'Python 3', extension: '.py', editorLanguage: 'python' },
+  { value: 'kotlin', label: 'Kotlin', extension: '.kt', editorLanguage: 'kotlin' },
+  { value: 'php', label: 'PHP', extension: '.php', editorLanguage: 'php' },
+  { value: 'csharp-mono', label: 'C# (mono)', extension: '.cs', editorLanguage: 'csharp' },
+  { value: 'csharp-dotnet', label: 'C# (dotnet)', extension: '.cs', editorLanguage: 'csharp' },
+  { value: 'ocaml', label: 'OCaml', extension: '.ml', editorLanguage: 'ocaml' },
+  { value: 'vb', label: 'VB', extension: '.vb', editorLanguage: 'vb' },
+  { value: 'ruby', label: 'Ruby', extension: '.rb', editorLanguage: 'ruby' },
+  { value: 'perl', label: 'Perl', extension: '.pl', editorLanguage: 'perl' },
+  { value: 'cobol', label: 'Cobol', extension: '.cob', editorLanguage: 'cobol' },
+  { value: 'r', label: 'R', extension: '.r', editorLanguage: 'r' },
+  { value: 'fortran', label: 'Fortran', extension: '.f90', editorLanguage: 'plaintext' },
+  { value: 'haskell', label: 'Haskell', extension: '.hs', editorLanguage: 'haskell' },
+  { value: 'assembly-gcc', label: 'Assembly (GCC)', extension: '.s', editorLanguage: 'plaintext' },
+  { value: 'assembly-nasm', label: 'Assembly (NASM)', extension: '.asm', editorLanguage: 'plaintext' },
+  { value: 'objective-c', label: 'Objective C', extension: '.m', editorLanguage: 'plaintext' },
+  { value: 'sqlite', label: 'SQLite', extension: '.sql', editorLanguage: 'sql' },
+  { value: 'dart', label: 'Dart', extension: '.dart', editorLanguage: 'dart' },
+  { value: 'groovy', label: 'Groovy', extension: '.groovy', editorLanguage: 'groovy' },
+  { value: 'typescript', label: 'TypeScript', extension: '.ts', editorLanguage: 'typescript' },
+  { value: 'javascript', label: 'Javascript', extension: '.js', editorLanguage: 'javascript' },
+  { value: 'prolog', label: 'Prolog', extension: '.pro', editorLanguage: 'plaintext' },
+  { value: 'swift', label: 'Swift', extension: '.swift', editorLanguage: 'swift' },
+  { value: 'rust', label: 'Rust', extension: '.rs', editorLanguage: 'rust' },
+  { value: 'go', label: 'Go', extension: '.go', editorLanguage: 'go' },
+  { value: 'bash', label: 'Bash', extension: '.sh', editorLanguage: 'shell' }
 ] as const;
+
+const KNOWN_EXTENSIONS = [
+  '.c', '.cpp', '.java', '.py', '.kt', '.php', '.cs', '.ml', '.vb', '.rb', '.pl', '.cob',
+  '.r', '.f90', '.f', '.for', '.hs', '.s', '.asm', '.m', '.sql', '.dart', '.groovy',
+  '.ts', '.tsx', '.js', '.jsx', '.pro', '.swift', '.rs', '.go', '.sh'
+];
 
 const languageFromFilename = (name: string): string => {
   const ext = name.split('.').pop()?.toLowerCase();
@@ -54,6 +76,8 @@ const languageFromFilename = (name: string): string => {
       return 'javascript';
     case 'py':
       return 'python';
+    case 'kt':
+      return 'kotlin';
     case 'java':
       return 'java';
     case 'cpp':
@@ -62,50 +86,85 @@ const languageFromFilename = (name: string): string => {
       return 'c';
     case 'php':
       return 'php';
+    case 'cs':
+      return 'csharp-dotnet';
+    case 'ml':
+      return 'ocaml';
+    case 'vb':
+      return 'vb';
+    case 'rb':
+      return 'ruby';
+    case 'pl':
+      return 'perl';
+    case 'cob':
+      return 'cobol';
+    case 'r':
+      return 'r';
+    case 'f':
+    case 'for':
+    case 'f90':
+      return 'fortran';
+    case 'hs':
+      return 'haskell';
+    case 's':
+      return 'assembly-gcc';
+    case 'asm':
+      return 'assembly-nasm';
+    case 'm':
+      return 'objective-c';
+    case 'sql':
+      return 'sqlite';
+    case 'dart':
+      return 'dart';
+    case 'groovy':
+    case 'gvy':
+      return 'groovy';
     case 'go':
       return 'go';
     case 'rs':
       return 'rust';
-    case 'json':
-      return 'json';
-    case 'css':
-      return 'css';
-    case 'html':
-      return 'html';
+    case 'pro':
+      return 'prolog';
+    case 'swift':
+      return 'swift';
+    case 'sh':
+    case 'bash':
+      return 'bash';
     default:
-      return 'plaintext';
+      return 'javascript';
   }
 };
 
+const languageLabel = (lang: string): string => {
+  return LANGUAGE_OPTIONS.find((option) => option.value === lang)?.label || 'Javascript';
+};
+
+const editorLanguageForSelection = (lang: string): string => {
+  return LANGUAGE_OPTIONS.find((option) => option.value === lang)?.editorLanguage || 'javascript';
+};
+
 const extensionForLanguage = (lang: string): string => {
-  switch (lang) {
-    case 'javascript':
-      return '.js';
-    case 'typescript':
-      return '.ts';
-    case 'python':
-      return '.py';
-    case 'java':
-      return '.java';
-    case 'cpp':
-      return '.cpp';
-    case 'c':
-      return '.c';
-    case 'php':
-      return '.php';
-    case 'go':
-      return '.go';
-    case 'rust':
-      return '.rs';
-    case 'json':
-      return '.json';
-    case 'css':
-      return '.css';
-    case 'html':
-      return '.html';
-    default:
-      return '.txt';
-  }
+  return LANGUAGE_OPTIONS.find((option) => option.value === lang)?.extension || '.js';
+};
+
+const hasKnownExtension = (name: string): boolean => {
+  const lowered = name.trim().toLowerCase();
+  return KNOWN_EXTENSIONS.some((ext) => lowered.endsWith(ext));
+};
+
+const buildFilenameForLanguage = (name: string, lang: string): string => {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  return hasKnownExtension(trimmed) ? trimmed : `${trimmed}${extensionForLanguage(lang)}`;
+};
+
+const syncFilenameToLanguage = (name: string, lang: string): string => {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  const lowered = trimmed.toLowerCase();
+  const matchedExtension = KNOWN_EXTENSIONS.find((ext) => lowered.endsWith(ext));
+  if (!matchedExtension) return `${trimmed}${extensionForLanguage(lang)}`;
+  return `${trimmed.slice(0, trimmed.length - matchedExtension.length)}${extensionForLanguage(lang)}`;
 };
 
 type SaveStatus = 'idle' | 'unsaved' | 'saving' | 'saved' | 'error';
@@ -114,7 +173,6 @@ type EditorState = {
   id: string;
   name: string;
   version: number;
-  language: string;
 };
 
 const DocumentsPage = () => {
@@ -132,12 +190,10 @@ const DocumentsPage = () => {
   const [saving, setSaving] = useState(false);
   const [newFileOpen, setNewFileOpen] = useState(false);
   const [newFileName, setNewFileName] = useState('');
-  const [newFileLanguage, setNewFileLanguage] = useState<string>('javascript');
-  const [languageOverride, setLanguageOverride] = useState<string | null>(null);
+  const [currentLanguage, setCurrentLanguage] = useState<string>('python');
   const [threads, setThreads] = useState<CommentThread[]>([]);
   const [showResolved, setShowResolved] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
-  const [runLanguage, setRunLanguage] = useState<string>('python');
   const [runStdin, setRunStdin] = useState('');
   const [runResult, setRunResult] = useState<ExecutionResult | null>(null);
   const [runLoading, setRunLoading] = useState(false);
@@ -152,8 +208,10 @@ const DocumentsPage = () => {
   }, [workspaces, invitedWorkspaces]);
 
   const currentWorkspaceName = allWorkspaces.find((w) => w.id === workspaceId)?.name || '–';
+
   const selectedDoc = useMemo(() => files.find((f) => f.id === selected?.id), [files, selected]);
   const lastEditor = selectedDoc?.updatedByEmail || selectedDoc?.updatedById || '—';
+  const newFilePreview = useMemo(() => buildFilenameForLanguage(newFileName, currentLanguage), [newFileName, currentLanguage]);
 
   useEffect(() => {
     const loadWorkspaces = async () => {
@@ -172,22 +230,24 @@ const DocumentsPage = () => {
           try {
             const w = await fetchWorkspace(token, id);
             acceptedWs.push(w);
-          } catch {
-            // ignore missing workspaces
+          } catch (e) {
+            // ignore missing
           }
         }
         setInvitedWorkspaces(acceptedWs);
 
         const requested = searchParams.get('workspaceId');
         const first = requested || ws[0]?.id || acceptedWs[0]?.id || '';
-        if (first) setWorkspaceId(first);
-      } catch (e: any) {
+        if (first) {
+          setWorkspaceId(first);
+        }
+    } catch (e: any) {
         setError(e.message || 'Could not load workspaces');
       }
     };
-
     loadWorkspaces();
-  }, [searchParams, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   useEffect(() => {
     const loadFiles = async () => {
@@ -196,19 +256,23 @@ const DocumentsPage = () => {
         const list = await listDocuments(token, workspaceId);
         setFiles(list);
         if (list.length > 0) {
-          selectFile(list[0]);
-          await loadComments(list[0].id);
+          const first = list[0];
+          selectFile(first);
         } else {
           setSelected(null);
           setContent('');
+        }
+        if (list.length > 0) {
+          await loadComments(list[0].id);
+        } else {
           setThreads([]);
         }
       } catch (e: any) {
         setError(e.message || 'Could not load files');
       }
     };
-
     loadFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId, token]);
 
   useEffect(() => {
@@ -217,6 +281,7 @@ const DocumentsPage = () => {
     } else {
       setThreads([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id, showResolved]);
 
   useEffect(() => {
@@ -227,16 +292,13 @@ const DocumentsPage = () => {
 
   const selectFile = (doc: Document) => {
     const inferredLang = languageFromFilename(doc.title);
-    const runnable = ['c', 'cpp', 'java', 'python'].includes(inferredLang) ? inferredLang : 'python';
     setSelected({
       id: doc.id,
       name: doc.title,
-      version: doc.version,
-      language: inferredLang
+      version: doc.version
     });
     setContent(doc.content);
-    setRunLanguage(runnable);
-    setLanguageOverride(null);
+    setCurrentLanguage(inferredLang);
     setSaveStatus('saved');
   };
 
@@ -249,7 +311,10 @@ const DocumentsPage = () => {
       return;
     }
 
-    if (typeof EventSource === 'undefined') return;
+    if (typeof EventSource === 'undefined') {
+      // environment (tests) without EventSource support
+      return;
+    }
 
     if (liveSource.current) {
       liveSource.current.close();
@@ -267,18 +332,17 @@ const DocumentsPage = () => {
           return exists ? mapped : [fresh, ...prev];
         });
         setContent(fresh.content);
-        setSelected((state) =>
-          state && state.id === fresh.id
+        setSelected((s) =>
+          s && s.id === fresh.id
             ? {
-                ...state,
+                ...s,
                 name: fresh.title,
-                version: fresh.version,
-                language: languageOverride || languageFromFilename(fresh.title)
+                version: fresh.version
               }
-            : state
+            : s
         );
         setSaveStatus('saved');
-      } catch {
+      } catch (e) {
         // ignore transient refresh errors
       }
     };
@@ -320,7 +384,8 @@ const DocumentsPage = () => {
       es.close();
       liveSource.current = null;
     };
-  }, [languageOverride, selected?.id, token]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, selected?.id]);
 
   const handleSave = async () => {
     if (!token || !selectedDoc || !selected) return;
@@ -332,8 +397,7 @@ const DocumentsPage = () => {
       setSelected({
         id: updated.id,
         name: updated.title,
-        version: updated.version,
-        language: languageOverride || languageFromFilename(updated.title)
+        version: updated.version
       });
       setSaveStatus('saved');
     } catch (e: any) {
@@ -348,19 +412,54 @@ const DocumentsPage = () => {
     e?.preventDefault();
     if (!token || !workspaceId || !newFileName.trim()) return;
     try {
-      const base = newFileName.trim();
-      const finalName = base.includes('.') ? base : `${base}${extensionForLanguage(newFileLanguage)}`;
+      const finalName = buildFilenameForLanguage(newFileName, currentLanguage);
       const created = await createDocument(token, workspaceId, finalName, '');
       setFiles((prev) => [created, ...prev]);
       selectFile(created);
-      setLanguageOverride(newFileLanguage);
       setNewFileName('');
-      setNewFileLanguage('javascript');
       setNewFileOpen(false);
     } catch (e: any) {
       setError(e.message || 'Could not create file');
     }
   };
+
+  const handleLanguageChange = (nextLanguage: string) => {
+    setCurrentLanguage(nextLanguage);
+
+    if (!selected) return;
+
+    const nextName = syncFilenameToLanguage(selected.name, nextLanguage);
+    if (nextName === selected.name) return;
+
+    setFiles((prev) =>
+      prev.map((file) => (file.id === selected.id ? { ...file, title: nextName } : file))
+    );
+    setSelected((prev) =>
+      prev && prev.id === selected.id
+        ? {
+            ...prev,
+            name: nextName
+          }
+        : prev
+    );
+    setSaveStatus('unsaved');
+  };
+
+  const statusLabel = {
+    idle: 'Saved',
+    saved: 'Saved',
+    unsaved: 'Unsaved changes',
+    saving: 'Saving...',
+    error: 'Save failed'
+  }[saveStatus];
+  const statusClass =
+    saveStatus === 'saved' || saveStatus === 'idle'
+      ? 'status-pill saved'
+      : saveStatus === 'unsaved'
+        ? 'status-pill unsaved'
+      : saveStatus === 'error'
+          ? 'status-pill error'
+          : 'status-pill';
 
   const handleRename = async (file: Document) => {
     if (!token) return;
@@ -373,34 +472,12 @@ const DocumentsPage = () => {
         setSelected({
           id: updated.id,
           name: updated.title,
-          version: updated.version,
-          language: languageOverride || languageFromFilename(updated.title)
+          version: updated.version
         });
+        setCurrentLanguage(languageFromFilename(updated.title));
       }
     } catch (e: any) {
       setError(e.message || 'Could not rename file');
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!token) return;
-    const confirmed = window.confirm('Delete this file?');
-    if (!confirmed) return;
-    try {
-      await deleteDocument(token, id);
-      setFiles((prev) => prev.filter((f) => f.id !== id));
-      if (selected?.id === id) {
-        const next = files.find((f) => f.id !== id);
-        if (next) {
-          selectFile(next);
-        } else {
-          setSelected(null);
-          setContent('');
-          setSaveStatus('idle');
-        }
-      }
-    } catch (e: any) {
-      setError(e.message || 'Could not delete file');
     }
   };
 
@@ -449,37 +526,37 @@ const DocumentsPage = () => {
     try {
       const msg = await addReply(token, threadId, body.trim());
       setThreads((prev) =>
-        prev.map((thread) =>
-          thread.id === threadId ? { ...thread, messages: [...thread.messages, msg] } : thread
+        prev.map((t) =>
+          t.id === threadId ? { ...t, messages: [...t.messages, msg] } : t
         )
       );
-      setReplyDrafts((drafts) => ({ ...drafts, [threadId]: '' }));
+      setReplyDrafts((d) => ({ ...d, [threadId]: '' }));
     } catch (e: any) {
       setError(e.message || 'Could not add reply');
     }
   };
 
   const handleResolve = async (threadId: string, reopen = false) => {
-    if (!token || !selected?.id) return;
+    if (!token) return;
     try {
       if (reopen) {
         await reopenThread(token, threadId);
       } else {
         await resolveThread(token, threadId);
       }
-      await loadComments(selected.id);
+      await loadComments(selected!.id);
     } catch (e: any) {
       setError(e.message || 'Could not change thread status');
     }
   };
 
   const handleRun = async () => {
-    if (!token || !selected?.id || !content.trim() || !runLanguage) return;
+    if (!token || !selected?.id || !content.trim() || !currentLanguage) return;
     outputPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     setRunLoading(true);
     setRunResult(null);
     try {
-      const result = await runCode(token, runLanguage, content, runStdin);
+      const result = await runCode(token, currentLanguage, content, runStdin);
       setRunResult(result);
     } catch (e: any) {
       setRunResult({
@@ -489,29 +566,33 @@ const DocumentsPage = () => {
         compileOutput: '',
         executionTime: '',
         memory: '',
-        language: runLanguage
+        language: currentLanguage
       });
     } finally {
       setRunLoading(false);
     }
   };
 
-  const statusLabel = {
-    idle: 'Saved',
-    saved: 'Saved',
-    unsaved: 'Unsaved changes',
-    saving: 'Saving...',
-    error: 'Save failed'
-  }[saveStatus];
-
-  const statusClass =
-    saveStatus === 'saved' || saveStatus === 'idle'
-      ? 'status-pill saved'
-      : saveStatus === 'unsaved'
-        ? 'status-pill unsaved'
-        : saveStatus === 'error'
-          ? 'status-pill error'
-          : 'status-pill';
+  const handleDelete = async (id: string) => {
+    if (!token) return;
+    const confirmed = window.confirm('Delete this file?');
+    if (!confirmed) return;
+    try {
+      await deleteDocument(token, id);
+      setFiles((prev) => prev.filter((f) => f.id !== id));
+      if (selected?.id === id) {
+        const next = files.find((f) => f.id !== id);
+        if (next) selectFile(next);
+        else {
+          setSelected(null);
+          setContent('');
+          setSaveStatus('idle');
+        }
+      }
+    } catch (e: any) {
+      setError(e.message || 'Could not delete file');
+    }
+  };
 
   return (
     <>
@@ -521,60 +602,67 @@ const DocumentsPage = () => {
           <div className="sidebar-header">
             <div className="sidebar-workspace">
               <div className="muted tiny">Workspace</div>
-              <select
-                aria-label="workspace"
-                className="select block"
-                value={workspaceId}
-                onChange={(e) => setWorkspaceId(e.target.value)}
-              >
+                <select
+                  aria-label="workspace"
+                  className="select block"
+                  value={workspaceId}
+                  onChange={(e) => setWorkspaceId(e.target.value)}
+                >
                 <option value="" disabled>Select workspace</option>
                 {allWorkspaces.map((ws) => (
                   <option key={ws.id} value={ws.id}>{ws.name}</option>
                 ))}
               </select>
             </div>
-            <button className="btn-accent" onClick={() => setNewFileOpen((value) => !value)} disabled={!workspaceId}>
-              + New file
+            <button className="btn-accent" onClick={() => setNewFileOpen((v) => !v)} disabled={!workspaceId}>
+              {newFileOpen ? 'Close' : '+ New file'}
             </button>
           </div>
 
           {newFileOpen && (
             <form className="new-file-box" onSubmit={handleNewFile}>
-              <input
-                aria-label="file name"
-                placeholder="ex: main.ts"
-                value={newFileName}
-                onChange={(e) => setNewFileName(e.target.value)}
-              />
-              <select
-                aria-label="file language"
-                className="select"
-                value={newFileLanguage}
-                onChange={(e) => setNewFileLanguage(e.target.value)}
-              >
-                {LANGUAGE_OPTIONS.map((lang) => (
-                  <option key={lang.value} value={lang.value}>{lang.label}</option>
-                ))}
-              </select>
-              <button className="btn" type="submit" disabled={!newFileName.trim()}>Create</button>
+              <div className="new-file-row">
+                <input
+                  aria-label="file name"
+                  placeholder="File name"
+                  value={newFileName}
+                  onChange={(e) => setNewFileName(e.target.value)}
+                />
+                <button className="btn" type="submit" disabled={!newFileName.trim()}>Create</button>
+              </div>
+              <div className="new-file-helper">
+                <span>Extension is added automatically from the selected language.</span>
+                <span className="new-file-extension">{extensionForLanguage(currentLanguage)}</span>
+              </div>
+              {newFilePreview && (
+                <div className="new-file-preview">
+                  Will create <strong>{newFilePreview}</strong>
+                </div>
+              )}
             </form>
           )}
 
           <div className="file-list">
-            <div className="file-list-title">Files</div>
+            <div className="file-list-header">
+              <div className="file-list-title">Files</div>
+              <span className="file-count">{files.length}</span>
+            </div>
             {files.length === 0 ? (
               <p className="muted">No files yet.</p>
             ) : (
               <ul>
-                {files.map((file) => (
-                  <li key={file.id} className={`file-item ${selected?.id === file.id ? 'selected' : ''}`}>
-                    <button type="button" className="file-item-main" onClick={() => selectFile(file)}>
+                {files.map((f) => (
+                  <li
+                    key={f.id}
+                    className={`file-item ${selected?.id === f.id ? 'selected' : ''}`}
+                  >
+                    <button type="button" className="file-item-main" onClick={() => selectFile(f)}>
                       <span className="dot" />
-                      <span className="file-name">{file.title}</span>
+                      <span className="file-name">{f.title}</span>
                     </button>
                     <div className="file-actions">
-                      <button type="button" className="ghost-btn file-action-btn" onClick={() => handleRename(file)}>Rename</button>
-                      <button type="button" className="danger-btn file-action-btn" onClick={() => handleDelete(file.id)}>Delete</button>
+                      <button type="button" className="ghost-btn file-action-btn" onClick={() => handleRename(f)}>Rename</button>
+                      <button type="button" className="ghost-btn file-action-btn" onClick={() => handleDelete(f.id)}>Delete</button>
                     </div>
                   </li>
                 ))}
@@ -586,50 +674,45 @@ const DocumentsPage = () => {
         <main className="editor-panel">
           <div className="editor-topbar">
             <div className="editor-meta">
-              <span className="file-name">{selected?.name || 'No file selected'}</span>
-              {selected && (
-                <select
-                  aria-label="language"
-                  className="select"
-                  value={languageOverride || selected.language}
-                  onChange={(e) => setLanguageOverride(e.target.value)}
-                >
-                  {LANGUAGE_OPTIONS.map((lang) => (
-                    <option key={lang.value} value={lang.value}>{lang.label}</option>
-                  ))}
-                </select>
-              )}
-              {selected && <span className="pill">v{selected.version}</span>}
+              <div className="editor-title">
+                <span className="file-name">{selected?.name || 'No file selected'}</span>
+                <span className="muted tiny">
+                  {selected ? `Current language: ${languageLabel(currentLanguage)}` : 'Pick a language, then create or open a file.'}
+                </span>
+              </div>
               {selected && <span className="pill">Last: {lastEditor}</span>}
               {selected && <span className={statusClass}>{statusLabel}</span>}
             </div>
             <div className="editor-actions">
-              <select
-                className="select"
-                value={runLanguage}
-                onChange={(e) => setRunLanguage(e.target.value)}
-              >
-                <option value="c">C</option>
-                <option value="cpp">C++</option>
-                <option value="java">Java</option>
-                <option value="python">Python</option>
-              </select>
+              <label className="toolbar-language">
+                <span className="muted tiny">Language</span>
+                <select
+                  aria-label="language"
+                  className="select"
+                  value={currentLanguage}
+                  onChange={(e) => handleLanguageChange(e.target.value)}
+                >
+                  {LANGUAGE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
               <button
                 className="btn"
                 onClick={handleRun}
-                disabled={!selected || runLoading || !content.trim() || !runLanguage}
+                disabled={!selected || runLoading || !content.trim() || !currentLanguage}
               >
                 {runLoading ? 'Running…' : 'Run'}
               </button>
-              {selected && (
-                <button className="ghost-btn" onClick={handleAddComment} disabled={!currentSelectionRange()}>
-                  Add comment for selection
-                </button>
-              )}
-              <Link className="button-link" to="/workspaces">Back</Link>
               <button className="btn" onClick={handleSave} disabled={!selected || saving || saveStatus === 'saved'}>
                 {saving ? 'Saving…' : 'Save'}
               </button>
+              {selected && (
+                <button className="ghost-btn" onClick={handleAddComment} disabled={!currentSelectionRange()}>
+                  Comment
+                </button>
+              )}
+              <Link className="button-link" to="/workspaces">Back</Link>
             </div>
           </div>
 
@@ -639,14 +722,14 @@ const DocumentsPage = () => {
                 <Editor
                   height="70vh"
                   theme="vs-dark"
-                  language={languageOverride || selected.language}
+                  language={editorLanguageForSelection(currentLanguage)}
                   value={content}
-                  onChange={(value) => {
-                    setContent(value ?? '');
+                  onChange={(v) => {
+                    setContent(v ?? '');
                     setSaveStatus('unsaved');
                   }}
-                  onMount={(instance) => {
-                    editorRef.current = instance;
+                  onMount={(editor) => {
+                    editorRef.current = editor;
                   }}
                   options={{ minimap: { enabled: false }, fontSize: 14 }}
                 />
@@ -682,37 +765,37 @@ const DocumentsPage = () => {
               ) : (
                 <div className="comment-thread-list">
                   {threads
-                    .filter((thread) => showResolved || thread.status === 'ACTIVE')
-                    .map((thread) => (
-                      <div key={thread.id} className={`comment-thread ${thread.status === 'RESOLVED' ? 'resolved' : ''}`}>
+                    .filter((t) => showResolved || t.status === 'ACTIVE')
+                    .map((t) => (
+                      <div key={t.id} className={`comment-thread ${t.status === 'RESOLVED' ? 'resolved' : ''}`}>
                         <div className="comment-thread-meta">
-                          <span className="badge">Lines {thread.lineStart}-{thread.lineEnd}</span>
-                          <span className="muted">by {thread.createdByEmail}</span>
-                          <span className={`status ${thread.status}`}>{thread.status}</span>
+                          <span className="badge">Lines {t.lineStart}-{t.lineEnd}</span>
+                          <span className="muted">by {t.createdByEmail}</span>
+                          <span className={`status ${t.status}`}>{t.status}</span>
                         </div>
                         <div className="comment-messages">
-                          {thread.messages.map((message) => (
-                            <div key={message.id} className="comment-message">
-                              <div className="muted">{message.authorEmail}</div>
-                              <div>{message.body}</div>
-                              <div className="muted tiny">{new Date(message.createdAt).toLocaleString()}</div>
+                          {t.messages.map((m) => (
+                            <div key={m.id} className="comment-message">
+                              <div className="muted">{m.authorEmail}</div>
+                              <div>{m.body}</div>
+                              <div className="muted tiny">{new Date(m.createdAt).toLocaleString()}</div>
                             </div>
                           ))}
                         </div>
                         <div className="comment-actions">
-                          {thread.status === 'ACTIVE' ? (
-                            <button className="ghost-btn" onClick={() => handleResolve(thread.id)}>Resolve</button>
+                          {t.status === 'ACTIVE' ? (
+                            <button className="ghost-btn" onClick={() => handleResolve(t.id)}>Resolve</button>
                           ) : (
-                            <button className="ghost-btn" onClick={() => handleResolve(thread.id, true)}>Reopen</button>
+                            <button className="ghost-btn" onClick={() => handleResolve(t.id, true)}>Reopen</button>
                           )}
                         </div>
                         <div className="comment-reply">
                           <input
                             placeholder="Reply..."
-                            value={replyDrafts[thread.id] || ''}
-                            onChange={(e) => setReplyDrafts((drafts) => ({ ...drafts, [thread.id]: e.target.value }))}
+                            value={replyDrafts[t.id] || ''}
+                            onChange={(e) => setReplyDrafts((d) => ({ ...d, [t.id]: e.target.value }))}
                           />
-                          <button className="btn" onClick={() => handleReply(thread.id)}>Send</button>
+                          <button className="btn" onClick={() => handleReply(t.id)}>Send</button>
                         </div>
                       </div>
                     ))}
@@ -776,8 +859,7 @@ const DocumentsPage = () => {
 
           <div className="status-bar">
             <span>{currentWorkspaceName}</span>
-            <span>{languageOverride || selected?.language || '–'}</span>
-            <span>{selected ? `v${selected.version}` : '–'}</span>
+            <span>{languageLabel(currentLanguage)}</span>
             <span className={statusClass}>{statusLabel}</span>
             <span>Last: {lastEditor}</span>
           </div>
