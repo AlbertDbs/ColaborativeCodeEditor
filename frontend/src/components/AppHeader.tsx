@@ -15,6 +15,7 @@ const AppHeader = () => {
   const navLinks = [
     { to: '/workspaces', label: 'Workspaces' },
     { to: '/invitations', label: 'Invitations' },
+    { to: '/documents', label: 'Editor' },
     { to: '/profile', label: 'Profile' }
   ];
 
