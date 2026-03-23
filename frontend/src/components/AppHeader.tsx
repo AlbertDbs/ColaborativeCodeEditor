@@ -12,7 +12,11 @@ const AppHeader = () => {
     navigate('/login', { replace: true });
   };
 
-  const navLinks = [{ to: '/profile', label: 'Profile' }];
+  const navLinks = [
+    { to: '/workspaces', label: 'Workspaces' },
+    { to: '/invitations', label: 'Invitations' },
+    { to: '/profile', label: 'Profile' }
+  ];
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
     `header-link ${isActive ? 'active' : ''}`;

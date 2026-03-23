@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import WorkspacesPage from './pages/WorkspacesPage';
+import InvitationsPage from './pages/InvitationsPage';
 import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -15,6 +17,22 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workspaces"
+        element={
+          <ProtectedRoute>
+            <WorkspacesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/invitations"
+        element={
+          <ProtectedRoute>
+            <InvitationsPage />
           </ProtectedRoute>
         }
       />
