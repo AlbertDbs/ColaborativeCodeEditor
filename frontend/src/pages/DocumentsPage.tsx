@@ -18,6 +18,7 @@ import {
   reopenThread,
   resolveThread
 } from '../api/comments';
+import { runCode, ExecutionResult } from '../api/executions';
 import { fetchInvitations } from '../api/invitations';
 import { fetchWorkspace, fetchWorkspaces, Workspace } from '../api/workspaces';
 import AppHeader from '../components/AppHeader';
@@ -136,8 +137,13 @@ const DocumentsPage = () => {
   const [threads, setThreads] = useState<CommentThread[]>([]);
   const [showResolved, setShowResolved] = useState(false);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
+  const [runLanguage, setRunLanguage] = useState<string>('python');
+  const [runStdin, setRunStdin] = useState('');
+  const [runResult, setRunResult] = useState<ExecutionResult | null>(null);
+  const [runLoading, setRunLoading] = useState(false);
   const liveSource = useRef<EventSource | null>(null);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const outputPanelRef = useRef<HTMLDivElement | null>(null);
 
   const allWorkspaces = useMemo(() => {
     const map = new Map<string, Workspace>();
@@ -213,14 +219,23 @@ const DocumentsPage = () => {
     }
   }, [selected?.id, showResolved]);
 
+  useEffect(() => {
+    if (!runLoading && runResult) {
+      outputPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [runLoading, runResult]);
+
   const selectFile = (doc: Document) => {
+    const inferredLang = languageFromFilename(doc.title);
+    const runnable = ['c', 'cpp', 'java', 'python'].includes(inferredLang) ? inferredLang : 'python';
     setSelected({
       id: doc.id,
       name: doc.title,
       version: doc.version,
-      language: languageFromFilename(doc.title)
+      language: inferredLang
     });
     setContent(doc.content);
+    setRunLanguage(runnable);
     setLanguageOverride(null);
     setSaveStatus('saved');
   };
@@ -458,6 +473,29 @@ const DocumentsPage = () => {
     }
   };
 
+  const handleRun = async () => {
+    if (!token || !selected?.id || !content.trim() || !runLanguage) return;
+    outputPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setRunLoading(true);
+    setRunResult(null);
+    try {
+      const result = await runCode(token, runLanguage, content, runStdin);
+      setRunResult(result);
+    } catch (e: any) {
+      setRunResult({
+        status: 'INTERNAL_ERROR',
+        stdout: '',
+        stderr: e.message || 'Execution failed',
+        compileOutput: '',
+        executionTime: '',
+        memory: '',
+        language: runLanguage
+      });
+    } finally {
+      setRunLoading(false);
+    }
+  };
+
   const statusLabel = {
     idle: 'Saved',
     saved: 'Saved',
@@ -566,6 +604,23 @@ const DocumentsPage = () => {
               {selected && <span className={statusClass}>{statusLabel}</span>}
             </div>
             <div className="editor-actions">
+              <select
+                className="select"
+                value={runLanguage}
+                onChange={(e) => setRunLanguage(e.target.value)}
+              >
+                <option value="c">C</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+                <option value="python">Python</option>
+              </select>
+              <button
+                className="btn"
+                onClick={handleRun}
+                disabled={!selected || runLoading || !content.trim() || !runLanguage}
+              >
+                {runLoading ? 'Running…' : 'Run'}
+              </button>
               {selected && (
                 <button className="ghost-btn" onClick={handleAddComment} disabled={!currentSelectionRange()}>
                   Add comment for selection
@@ -664,6 +719,59 @@ const DocumentsPage = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          <div className="output-panel" ref={outputPanelRef}>
+            <div className="panel-header">
+              <div>
+                <h4>Output</h4>
+                <p className="muted">Execution result and program input</p>
+              </div>
+              {runResult && <span className={`status ${runResult.status === 'SUCCESS' ? 'ACTIVE' : 'RESOLVED'}`}>{runResult.status}</span>}
+            </div>
+            <div className="output-section">
+              <div className="output-label">Program input (stdin)</div>
+              <textarea
+                className="stdin-input"
+                placeholder={'Example:\n5 7\nhello'}
+                value={runStdin}
+                onChange={(e) => setRunStdin(e.target.value)}
+                rows={4}
+              />
+            </div>
+            {runLoading && <p className="muted">Running...</p>}
+            {!runLoading && !runResult && <p className="muted">Click Run to execute the current file.</p>}
+            {!runLoading && runResult && (
+              <div className={`output-body ${runResult.status === 'SUCCESS' ? 'ok' : 'error'}`}>
+                {runResult.executionTime && (
+                  <div className="muted tiny">Time: {runResult.executionTime}s | Memory: {runResult.memory}</div>
+                )}
+                {runResult.stdout && (
+                  <div className="output-section">
+                    <div className="output-label">Program output</div>
+                    <pre className="output-ok">{runResult.stdout}</pre>
+                  </div>
+                )}
+                {runResult.compileOutput && (
+                  <div className="output-section">
+                    <div className="output-label">Compile output</div>
+                    <pre className="output-error">{runResult.compileOutput}</pre>
+                  </div>
+                )}
+                {runResult.stderr && (
+                  <div className="output-section">
+                    <div className="output-label">Errors</div>
+                    <pre className="output-error">{runResult.stderr}</pre>
+                  </div>
+                )}
+                {!runResult.stdout && !runResult.stderr && !runResult.compileOutput && (
+                  <div className="output-section">
+                    <div className="output-label">Program output</div>
+                    <pre className="output-ok">Program finished with no output.</pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="status-bar">
