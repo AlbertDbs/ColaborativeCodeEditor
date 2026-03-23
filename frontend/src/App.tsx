@@ -5,7 +5,6 @@ import DashboardPage from './pages/DashboardPage';
 import WorkspacesPage from './pages/WorkspacesPage';
 import InvitationsPage from './pages/InvitationsPage';
 import DocumentsPage from './pages/DocumentsPage';
-import ProfilePage from './pages/ProfilePage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -49,7 +48,7 @@ function App() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <ProfilePage />
+            <Navigate to="/documents" replace />
           </ProtectedRoute>
         }
       />

@@ -15,8 +15,7 @@ const AppHeader = () => {
   const navLinks = [
     { to: '/workspaces', label: 'Workspaces' },
     { to: '/invitations', label: 'Invitations' },
-    { to: '/documents', label: 'Editor' },
-    { to: '/profile', label: 'Profile' }
+    { to: '/documents', label: 'Editor' }
   ];
 
   const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -46,9 +45,6 @@ const AppHeader = () => {
       </nav>
 
       <div className="header-actions">
-        <button className="ghost-btn desktop-only" onClick={() => navigate('/profile')}>
-          Profile
-        </button>
         <button className="primary-btn desktop-only" onClick={handleLogout}>Logout</button>
         <button
           className="icon-btn mobile-only"
